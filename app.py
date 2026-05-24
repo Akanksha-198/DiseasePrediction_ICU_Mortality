@@ -539,7 +539,7 @@ if refresh_clicked:
 # ───────────────── FOOTER ─────────────────
 st.markdown(f"""
 <div class="footer">
-⚠️ Educational / Research Purpose Only <br>
+
 Random Forest Model • Accuracy: {acc:.2f}% • AUC: {auc:.2f}
 </div>
 """, unsafe_allow_html=True)
