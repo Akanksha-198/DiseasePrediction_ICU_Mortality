@@ -11,7 +11,6 @@ warnings.filterwarnings('ignore')
 # ─────────────────────────────────────
 st.set_page_config(
     page_title="Disease Prediction with ICU Mortality",
-    page_icon="🏥",
     layout="centered"
 )
 
@@ -286,8 +285,7 @@ model, acc, auc, tn, fp, fn, tp = load_and_train()
 # ───────────────── TITLE ─────────────────
 st.markdown("""
 <div class="main-title">
-    <h1>🏥 Disease Prediction with ICU Mortality</h1>
-    <p>AI-Based Critical Patient Risk Assessment System</p>
+    <h1> Disease Prediction with ICU Mortality</h1>
 </div>
 """, unsafe_allow_html=True)
 
