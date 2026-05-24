@@ -242,44 +242,42 @@ def row(f1, f2, inputs):
     return v1, v2
 
 # Define all input widgets
-def mk(key, default, lo, hi, step=None):
-    if step:
-        return lambda: st.number_input(key, min_value=float(lo),
-                                       max_value=float(hi),
-                                       value=float(default),
-                                       step=float(step), key=key,
-                                       label_visibility="collapsed")
-    return lambda: st.number_input(key, min_value=lo, max_value=hi,
-                                   value=default, key=key,
-                                   label_visibility="collapsed")
-
+# Define all input widgets (EMPTY BY DEFAULT)
+def mk(key):
+    return lambda: st.text_input(
+        label=key,
+        value="",
+        key=key,
+        label_visibility="collapsed"
+    )
 inputs = {
-    'SOFA':       mk('SOFA',      9,   0,   24,  1),
-    'Age':        mk('Age',       63,  18,  100, 1),
-    'GCS':        mk('GCS',       10,  3,   15,  1),
-    'BUN':        mk('BUN',       22,  1,   150, 0.1),
-    'Creatinine': mk('Creatinine',1.0, 0.1, 15,  0.01),
-    'Urine':      mk('Urine',     95,  0,   3000,1),
-    'Lactate':    mk('Lactate',   2.0, 0.5, 25,  0.1),
-    'pH':         mk('pH',        7.38,6.8, 7.6, 0.01),
-    'HCO3':       mk('HCO3',      22,  5,   50,  0.1),
-    'MAP':        mk('MAP',       79,  40,  200, 0.1),
-    'HR':         mk('HR',        89,  30,  180, 1),
-    'PaO2':       mk('PaO2',      132, 40,  500, 1),
-    'FiO2':       mk('FiO2',      0.54,0.21,1.0, 0.01),
-    'WBC':        mk('WBC',       12.2,0.1, 150, 0.1),
-    'HCT':        mk('HCT',       31,  15,  60,  0.1),
-    'Platelets':  mk('Platelets', 181, 10,  1000,1),
-    'Albumin':    mk('Albumin',   2.8, 1.0, 5.0, 0.1),
-    'Glucose':    mk('Glucose',   135, 50,  400, 1),
-    'Weight':     mk('Weight',    82,  30,  250, 0.1),
+    'SOFA': mk('SOFA'),
+    'Age': mk('Age'),
+    'GCS': mk('GCS'),
+    'BUN': mk('BUN'),
+    'Creatinine': mk('Creatinine'),
+    'Urine': mk('Urine'),
+    'Lactate': mk('Lactate'),
+    'pH': mk('pH'),
+    'HCO3': mk('HCO3'),
+    'MAP': mk('MAP'),
+    'HR': mk('HR'),
+    'PaO2': mk('PaO2'),
+    'FiO2': mk('FiO2'),
+    'WBC': mk('WBC'),
+    'HCT': mk('HCT'),
+    'Platelets': mk('Platelets'),
+    'Albumin': mk('Albumin'),
+    'Glucose': mk('Glucose'),
+    'Weight': mk('Weight'),
 }
-
 def mv():
-    return st.selectbox('MechVent', [1,0],
-                        format_func=lambda x: '1' if x==1 else '0',
-                        key='MechVent',
-                        label_visibility="collapsed")
+    return st.selectbox(
+        'MechVent',
+        ["", 1, 0],
+        key='MechVent',
+        label_visibility="collapsed"
+    )
 
 SOFA,      Age       = row('SOFA',       'Age',       inputs)
 GCS,       BUN       = row('GCS',        'BUN',       inputs)
@@ -361,9 +359,19 @@ with c2:
 
 # ── PREDICT LOGIC ─────────────────────
 if predict_clicked:
-    input_data = [[SOFA, Age, GCS, BUN, Creatinine, Urine, Lactate,
-                   pH, HCO3, MAP, HR, PaO2, FiO2, MechVent,
-                   WBC, HCT, Platelets, Albumin, Glucose, Weight]]
+   values = [
+    SOFA, Age, GCS, BUN, Creatinine, Urine, Lactate,
+    pH, HCO3, MAP, HR, PaO2, FiO2, MechVent,
+    WBC, HCT, Platelets, Albumin, Glucose, Weight
+]
+
+# Check if any field is empty
+if "" in values:
+    st.error("Please fill all input fields before prediction.")
+    st.stop()
+
+# Convert input values to float
+    input_data = [[float(v) for v in values]]
     df_input = pd.DataFrame(input_data, columns=FEATURES)
     prob     = model.predict_proba(df_input)[0][1]
     pred     = 1 if prob > 0.4 else 0
