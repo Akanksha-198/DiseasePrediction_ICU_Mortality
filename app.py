@@ -6,243 +6,294 @@ from sklearn.metrics import accuracy_score, roc_auc_score, confusion_matrix
 import warnings
 warnings.filterwarnings('ignore')
 
+# ─────────────────────────────────────
+# PAGE CONFIG
+# ─────────────────────────────────────
 st.set_page_config(
-    page_title="ICU Mortality Predictor",
+    page_title="Disease Prediction with ICU Mortality",
     page_icon="🏥",
     layout="centered"
 )
 
+# ─────────────────────────────────────
+# CUSTOM CSS
+# ─────────────────────────────────────
 st.markdown("""
 <style>
-    /* ── Global background ── */
-    .stApp { background-color: #F7F9FC; }
-    .block-container {
-        background-color: #F7F9FC;
-        padding-top: 0 !important;
-        max-width: 820px;
-    }
 
-    /* ── Hide streamlit chrome ── */
-    #MainMenu, footer, header { visibility: hidden; }
-    .stDeployButton { display: none; }
+/* ───────────────── GLOBAL ───────────────── */
+.stApp{
+    background: linear-gradient(135deg,#eef2ff,#f8fafc,#e0f2fe);
+}
 
-    /* ── Title bar exactly like full.py ── */
-    .title-bar {
-        background-color: #A8DADC;
-        padding: 14px 0;
-        text-align: center;
-        margin: -4rem -4rem 1rem -4rem;
-    }
-    .title-bar h2 {
-        font-family: "Segoe UI", sans-serif;
-        font-size: 26px;
-        font-weight: 700;
-        color: #2b2d42;
-        margin: 0;
-    }
+.block-container{
+    max-width: 950px;
+    padding-top: 0rem;
+}
 
-    /* ── Card (white box) ── */
-    .form-card {
-        background: #FFFFFF;
-        border-radius: 4px;
-        padding: 18px 24px;
-        margin-bottom: 14px;
-    }
+/* Hide streamlit default */
+#MainMenu, footer, header{
+    visibility:hidden;
+}
 
-    /* ── Input row — label + box side by side ── */
-    .input-row {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-    .input-label {
-        font-family: "Segoe UI", sans-serif;
-        font-size: 13px;
-        font-weight: 700;
-        color: #2b2d42;
-        width: 110px;
-        flex-shrink: 0;
-    }
+/* ───────────────── TITLE BAR ───────────────── */
+.main-title{
+    background: linear-gradient(90deg,#6a11cb,#2575fc);
+    padding: 20px;
+    border-radius: 0px 0px 18px 18px;
+    text-align:center;
+    margin-bottom: 25px;
+    box-shadow: 0px 4px 18px rgba(0,0,0,0.15);
+}
 
-    /* ── Streamlit number input styling ── */
-    .stNumberInput input {
-        background-color: #eef2f3 !important;
-        font-family: "Segoe UI", sans-serif !important;
-        font-size: 13px !important;
-        color: #2b2d42 !important;
-        border: 1px solid #ccc !important;
-        border-radius: 3px !important;
-        padding: 4px 8px !important;
-    }
-    .stSelectbox > div > div {
-        background-color: #eef2f3 !important;
-        font-family: "Segoe UI", sans-serif !important;
-    }
+.main-title h1{
+    color:white;
+    margin:0;
+    font-size:34px;
+    font-weight:800;
+    font-family:'Segoe UI';
+}
 
-    /* ── Hide number input label (we use custom) ── */
-    .stNumberInput label { display: none !important; }
-    .stSelectbox label   { display: none !important; }
+.main-title p{
+    color:#e9ecef;
+    margin-top:5px;
+    font-size:14px;
+    font-family:'Segoe UI';
+}
 
-    /* ── Predict button ── */
-    div[data-testid="column"]:nth-child(1) .stButton > button {
-        background-color: #A8DADC !important;
-        color: #2b2d42 !important;
-        font-family: "Segoe UI", sans-serif !important;
-        font-weight: 700 !important;
-        font-size: 14px !important;
-        border: none !important;
-        border-radius: 3px !important;
-        width: 100% !important;
-        padding: 8px !important;
-    }
-    div[data-testid="column"]:nth-child(1) .stButton > button:hover {
-        background-color: #88c8ca !important;
-    }
+/* ───────────────── FORM CARD ───────────────── */
+.form-card{
+    background:white;
+    border-radius:20px;
+    padding:28px;
+    box-shadow:0px 6px 20px rgba(0,0,0,0.08);
+    margin-bottom:20px;
+}
 
-    /* ── Refresh button ── */
-    div[data-testid="column"]:nth-child(2) .stButton > button {
-        background-color: #FFC8DD !important;
-        color: #2b2d42 !important;
-        font-family: "Segoe UI", sans-serif !important;
-        font-weight: 700 !important;
-        font-size: 14px !important;
-        border: none !important;
-        border-radius: 3px !important;
-        width: 100% !important;
-        padding: 8px !important;
-    }
-    div[data-testid="column"]:nth-child(2) .stButton > button:hover {
-        background-color: #ffaacb !important;
-    }
+/* Labels */
+.grid-label{
+    font-size:14px;
+    font-weight:700;
+    color:#1e293b;
+    margin-top:8px;
+    font-family:'Segoe UI';
+}
 
-    /* ── Result text ── */
-    .pred-text {
-        font-family: "Segoe UI", sans-serif;
-        font-size: 20px;
-        font-weight: 700;
-        text-align: center;
-        margin: 8px 0 2px 0;
-    }
-    .prob-text {
-        font-family: "Segoe UI", sans-serif;
-        font-size: 14px;
-        text-align: center;
-        color: #2b2d42;
-        margin-bottom: 8px;
-    }
+/* INPUT BOX */
+.stTextInput input{
+    background:#111827 !important;
+    color:white !important;
+    border:2px solid #374151 !important;
+    border-radius:10px !important;
+    padding:10px !important;
+    font-size:14px !important;
+}
 
-    /* ── Risk bar ── */
-    .risk-bar {
-        width: 100%;
-        height: 36px;
-        border-radius: 4px;
-        background: linear-gradient(to right, #00cc00, #ffff00, #ff0000);
-        position: relative;
-        margin: 6px 0 2px 0;
-    }
-    .risk-needle {
-        position: absolute;
-        top: 4px;
-        width: 26px;
-        height: 26px;
-        border-radius: 50%;
-        background: #1a1a2e;
-        border: 2px solid white;
-        transform: translateX(-50%);
-        box-shadow: 0 1px 5px rgba(0,0,0,0.5);
-    }
-    .risk-labels {
-        display: flex;
-        justify-content: space-between;
-        font-family: "Segoe UI", sans-serif;
-        font-size: 12px;
-        margin-top: 2px;
-        padding: 0 2px;
-    }
+.stTextInput input:focus{
+    border:2px solid #7c3aed !important;
+    box-shadow:0px 0px 8px rgba(124,58,237,0.5);
+}
 
-    /* ── Conditions box ── */
-    .cond-box {
-        background-color: #eaf4f4;
-        border-radius: 4px;
-        padding: 12px 16px;
-        font-family: "Segoe UI", sans-serif;
-        font-size: 13px;
-        color: #2b2d42;
-        min-height: 100px;
-        margin-top: 10px;
-        white-space: pre-line;
-    }
+/* ───────────────── SELECTBOX FIX ───────────────── */
+.stSelectbox > div > div{
+    background:#111827 !important;
+    color:white !important;
+    border-radius:10px !important;
+    border:2px solid #374151 !important;
+}
 
-    /* ── Grid label styling for form ── */
-    .grid-label {
-        font-family: "Segoe UI", sans-serif;
-        font-size: 13px;
-        font-weight: 700;
-        color: #2b2d42;
-        margin-bottom: 2px;
-    }
+/* dropdown text */
+.stSelectbox div[data-baseweb="select"] > div{
+    background:#111827 !important;
+    color:white !important;
+}
+
+/* make mechvent black */
+div[data-baseweb="select"]{
+    background:#111827 !important;
+    border-radius:10px !important;
+}
+
+/* Hide labels */
+.stTextInput label,
+.stSelectbox label{
+    display:none !important;
+}
+
+/* ───────────────── BUTTONS ───────────────── */
+.stButton button{
+    border:none !important;
+    border-radius:12px !important;
+    padding:12px !important;
+    font-size:15px !important;
+    font-weight:700 !important;
+    transition:0.3s;
+}
+
+div[data-testid="column"]:nth-child(1) .stButton button{
+    background:linear-gradient(90deg,#00c853,#64dd17) !important;
+    color:white !important;
+}
+
+div[data-testid="column"]:nth-child(1) .stButton button:hover{
+    transform:scale(1.03);
+}
+
+div[data-testid="column"]:nth-child(2) .stButton button{
+    background:linear-gradient(90deg,#ff416c,#ff4b2b) !important;
+    color:white !important;
+}
+
+div[data-testid="column"]:nth-child(2) .stButton button:hover{
+    transform:scale(1.03);
+}
+
+/* ───────────────── RESULT CARD ───────────────── */
+.result-card{
+    background:white;
+    border-radius:20px;
+    padding:24px;
+    box-shadow:0px 6px 20px rgba(0,0,0,0.08);
+}
+
+/* Prediction */
+.pred-text{
+    text-align:center;
+    font-size:24px;
+    font-weight:800;
+    font-family:'Segoe UI';
+}
+
+.prob-text{
+    text-align:center;
+    font-size:18px;
+    color:#334155;
+    margin-top:-5px;
+}
+
+/* ───────────────── RISK BAR ───────────────── */
+.risk-bar{
+    width:100%;
+    height:40px;
+    border-radius:50px;
+    background:linear-gradient(to right,#00e676,#ffee58,#ff1744);
+    position:relative;
+    margin-top:15px;
+}
+
+.risk-needle{
+    position:absolute;
+    top:4px;
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    background:#111827;
+    border:3px solid white;
+    transform:translateX(-50%);
+    box-shadow:0px 0px 10px rgba(0,0,0,0.4);
+}
+
+.risk-labels{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    margin-top:6px;
+    font-weight:700;
+}
+
+/* ───────────────── CONDITIONS BOX ───────────────── */
+.cond-box{
+    background:#f1f5f9;
+    border-left:6px solid #7c3aed;
+    padding:18px;
+    border-radius:12px;
+    margin-top:18px;
+    font-size:14px;
+    font-family:'Segoe UI';
+    color:#1e293b;
+    white-space:pre-line;
+}
+
+/* Footer */
+.footer{
+    text-align:center;
+    color:#64748b;
+    font-size:13px;
+    margin-top:15px;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
-# ── FEATURES ──────────────────────────
+# ───────────────── FEATURES ─────────────────
 FEATURES = [
     'SOFA','Age','GCS','BUN','Creatinine','Urine','Lactate',
     'pH','HCO3','MAP','HR','PaO2','FiO2','MechVent',
     'WBC','HCT','Platelets','Albumin','Glucose','Weight'
 ]
+
 TARGET = 'In-hospital_death'
 
+# ───────────────── MODEL ─────────────────
 @st.cache_resource
 def load_and_train():
+
     df = pd.read_csv("merged_output.csv")
+
     df.drop(columns=['TropI','TropT'], inplace=True)
+
     high_null = [c for c in df.columns if df[c].isnull().mean() > 0.85]
     df.drop(columns=high_null, inplace=True)
+
     drop_cols = ['RecordID','Survival','Length_of_stay','completeness']
+
     df.drop(columns=[c for c in drop_cols if c in df.columns], inplace=True)
+
     df.fillna(df.median(numeric_only=True), inplace=True)
     df.fillna(0, inplace=True)
-    X = df[FEATURES]; y = df[TARGET]
+
+    X = df[FEATURES]
+    y = df[TARGET]
+
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y)
+        X, y,
+        test_size=0.2,
+        random_state=42,
+        stratify=y
+    )
+
     model = RandomForestClassifier(
-        n_estimators=200, class_weight='balanced', random_state=42)
+        n_estimators=200,
+        class_weight='balanced',
+        random_state=42
+    )
+
     model.fit(X_train, y_train)
+
     y_pred = model.predict(X_test)
     y_prob = model.predict_proba(X_test)[:,1]
-    acc  = accuracy_score(y_test, y_pred)*100
-    auc  = roc_auc_score(y_test, y_prob)
-    cm   = confusion_matrix(y_test, y_pred)
+
+    acc = accuracy_score(y_test, y_pred) * 100
+    auc = roc_auc_score(y_test, y_prob)
+
+    cm = confusion_matrix(y_test, y_pred)
     tn,fp,fn,tp = cm.ravel()
-    return model, acc, auc, len(X_train), len(X_test), tn, fp, fn, tp
 
-model, acc, auc, n_train, n_test, tn, fp, fn, tp = load_and_train()
+    return model, acc, auc, tn, fp, fn, tp
 
-# ══════════════════════════════════════
-# TITLE BAR — exact same as full.py
-# ══════════════════════════════════════
+model, acc, auc, tn, fp, fn, tp = load_and_train()
+
+# ───────────────── TITLE ─────────────────
 st.markdown("""
-<div class="title-bar">
-  <h2>ICU Mortality Predictor</h2>
+<div class="main-title">
+    <h1>🏥 Disease Prediction with ICU Mortality</h1>
+    <p>AI-Based Critical Patient Risk Assessment System</p>
 </div>
 """, unsafe_allow_html=True)
 
-# ══════════════════════════════════════
-# FORM CARD — 2-column grid same as full.py
-# ══════════════════════════════════════
+# ───────────────── FORM CARD ─────────────────
 st.markdown('<div class="form-card">', unsafe_allow_html=True)
 
-# Each row = 2 fields side by side (label + input)
-def row(f1, f2, inputs):
-    c1, c2, c3, c4 = st.columns([1.2, 1, 1.2, 1])
-    with c1: st.markdown(f'<div class="grid-label">{f1}</div>', unsafe_allow_html=True)
-    with c2: v1 = inputs[f1]()
-    with c3: st.markdown(f'<div class="grid-label">{f2}</div>', unsafe_allow_html=True)
-    with c4: v2 = inputs[f2]()
-    return v1, v2
-
-# Define all input widgets
-# Define all input widgets (EMPTY BY DEFAULT)
 def mk(key):
     return lambda: st.text_input(
         label=key,
@@ -250,6 +301,7 @@ def mk(key):
         key=key,
         label_visibility="collapsed"
     )
+
 inputs = {
     'SOFA': mk('SOFA'),
     'Age': mk('Age'),
@@ -271,114 +323,183 @@ inputs = {
     'Glucose': mk('Glucose'),
     'Weight': mk('Weight'),
 }
+
 def mv():
     return st.selectbox(
         'MechVent',
-        ["", 1, 0],
+        ["",1,0],
         key='MechVent',
         label_visibility="collapsed"
     )
 
-SOFA,      Age       = row('SOFA',       'Age',       inputs)
-GCS,       BUN       = row('GCS',        'BUN',       inputs)
-Creatinine,Urine     = row('Creatinine', 'Urine',     inputs)
-Lactate,   pH        = row('Lactate',    'pH',        inputs)
-HCO3,      MAP       = row('HCO3',       'MAP',       inputs)
-HR,        PaO2      = row('HR',         'PaO2',      inputs)
-FiO2_val = None
-WBC_val  = None
+def row(f1,f2,inputs):
 
-# FiO2 + MechVent row
+    c1,c2,c3,c4 = st.columns([1.2,1,1.2,1])
+
+    with c1:
+        st.markdown(f'<div class="grid-label">{f1}</div>', unsafe_allow_html=True)
+
+    with c2:
+        v1 = inputs[f1]()
+
+    with c3:
+        st.markdown(f'<div class="grid-label">{f2}</div>', unsafe_allow_html=True)
+
+    with c4:
+        v2 = inputs[f2]()
+
+    return v1,v2
+
+SOFA, Age = row('SOFA','Age',inputs)
+GCS, BUN = row('GCS','BUN',inputs)
+Creatinine, Urine = row('Creatinine','Urine',inputs)
+Lactate, pH = row('Lactate','pH',inputs)
+HCO3, MAP = row('HCO3','MAP',inputs)
+HR, PaO2 = row('HR','PaO2',inputs)
+
+# FiO2 + MechVent
 c1,c2,c3,c4 = st.columns([1.2,1,1.2,1])
-with c1: st.markdown('<div class="grid-label">FiO2</div>', unsafe_allow_html=True)
-with c2: FiO2 = inputs['FiO2']()
-with c3: st.markdown('<div class="grid-label">MechVent</div>', unsafe_allow_html=True)
-with c4: MechVent = mv()
 
-WBC,       HCT       = row('WBC',        'HCT',       inputs)
-Platelets, Albumin   = row('Platelets',  'Albumin',   inputs)
-Glucose,   Weight    = row('Glucose',    'Weight',    inputs)
+with c1:
+    st.markdown('<div class="grid-label">FiO2</div>', unsafe_allow_html=True)
+
+with c2:
+    FiO2 = inputs['FiO2']()
+
+with c3:
+    st.markdown('<div class="grid-label">MechVent</div>', unsafe_allow_html=True)
+
+with c4:
+    MechVent = mv()
+
+WBC, HCT = row('WBC','HCT',inputs)
+Platelets, Albumin = row('Platelets','Albumin',inputs)
+Glucose, Weight = row('Glucose','Weight',inputs)
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ══════════════════════════════════════
-# RESULT AREA — always visible like full.py
-# ══════════════════════════════════════
-st.markdown('<div class="form-card">', unsafe_allow_html=True)
+# ───────────────── RESULT CARD ─────────────────
+st.markdown('<div class="result-card">', unsafe_allow_html=True)
 
 if 'pred_result' not in st.session_state:
     st.session_state.pred_result = None
 
-# Prediction text
 if st.session_state.pred_result is None:
-    st.markdown('<p class="pred-text" style="color:#2b2d42">Prediction: --</p>', unsafe_allow_html=True)
-    st.markdown('<p class="prob-text">Probability: --</p>', unsafe_allow_html=True)
-else:
-    r = st.session_state.pred_result
-    col = "red" if r['pred']==1 else "green"
-    txt = "YES (Patient may DIE)" if r['pred']==1 else "NO (Patient will SURVIVE)"
-    st.markdown(f'<p class="pred-text" style="color:{col}">Prediction: {txt}</p>', unsafe_allow_html=True)
-    st.markdown(f'<p class="prob-text">Probability: {r["prob"]*100:.1f}%</p>', unsafe_allow_html=True)
 
-# Risk bar — always shown
+    st.markdown(
+        '<p class="pred-text" style="color:#334155">Prediction: --</p>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        '<p class="prob-text">Probability: --</p>',
+        unsafe_allow_html=True
+    )
+
+else:
+
+    r = st.session_state.pred_result
+
+    color = "red" if r['pred']==1 else "green"
+
+    txt = (
+        "YES (High Mortality Risk)"
+        if r['pred']==1
+        else
+        "NO (Patient Likely Stable)"
+    )
+
+    st.markdown(
+        f'<p class="pred-text" style="color:{color}">{txt}</p>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        f'<p class="prob-text">Mortality Probability: {r["prob"]*100:.2f}%</p>',
+        unsafe_allow_html=True
+    )
+
+# Risk bar
 needle = 2
+
 if st.session_state.pred_result:
-    needle = min(max(st.session_state.pred_result['prob']*100, 1), 99)
+    needle = min(max(st.session_state.pred_result['prob']*100,1),99)
 
 st.markdown(f"""
 <div class="risk-bar">
-  <div class="risk-needle" style="left:{needle}%;"></div>
+    <div class="risk-needle" style="left:{needle}%"></div>
 </div>
+
 <div class="risk-labels">
-  <span style="color:green">Low Risk</span>
-  <span style="color:orange">Medium</span>
-  <span style="color:red">High Risk</span>
+    <span style="color:green;">LOW RISK</span>
+    <span style="color:orange;">MEDIUM</span>
+    <span style="color:red;">HIGH RISK</span>
 </div>
 """, unsafe_allow_html=True)
 
-# Conditions box — always shown
+# Conditions
 cond_text = "Conditions: --"
-if st.session_state.pred_result:
-    diseases = st.session_state.pred_result['diseases']
-    if diseases:
-        cond_text = "Conditions:\n" + "\n".join(f"• {d}" for d in diseases)
-    else:
-        cond_text = "Conditions:\n• No major issues"
 
-st.markdown(f'<div class="cond-box">{cond_text}</div>', unsafe_allow_html=True)
+if st.session_state.pred_result:
+
+    diseases = st.session_state.pred_result['diseases']
+
+    if diseases:
+        cond_text = "Detected Conditions:\\n" + "\\n".join(
+            f"• {d}" for d in diseases
+        )
+    else:
+        cond_text = "Detected Conditions:\\n• No major abnormalities"
+
+st.markdown(
+    f'<div class="cond-box">{cond_text}</div>',
+    unsafe_allow_html=True
+)
+
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ══════════════════════════════════════
-# BUTTONS — Predict & Refresh
-# ══════════════════════════════════════
-c1, c2 = st.columns(2)
-with c1:
-    predict_clicked = st.button("Predict", use_container_width=True)
-with c2:
-    refresh_clicked = st.button("Refresh", use_container_width=True)
+# ───────────────── BUTTONS ─────────────────
+c1,c2 = st.columns(2)
 
-# ── PREDICT LOGIC ─────────────────────
+with c1:
+    predict_clicked = st.button(
+        "🔍 Predict",
+        use_container_width=True
+    )
+
+with c2:
+    refresh_clicked = st.button(
+        "🔄 Refresh",
+        use_container_width=True
+    )
+
+# ───────────────── PREDICT LOGIC ─────────────────
 if predict_clicked:
 
     values = [
-        SOFA, Age, GCS, BUN, Creatinine, Urine, Lactate,
-        pH, HCO3, MAP, HR, PaO2, FiO2, MechVent,
-        WBC, HCT, Platelets, Albumin, Glucose, Weight
+        SOFA, Age, GCS, BUN, Creatinine, Urine,
+        Lactate, pH, HCO3, MAP, HR, PaO2,
+        FiO2, MechVent, WBC, HCT,
+        Platelets, Albumin, Glucose, Weight
     ]
 
-    # Check if any field is empty
     if "" in values:
-        st.error("Please fill all input fields before prediction.")
+
+        st.error("⚠️ Please fill all input fields.")
         st.stop()
 
-    # Convert input values to float
     input_data = [[float(v) for v in values]]
 
-    df_input = pd.DataFrame(input_data, columns=FEATURES)
+    df_input = pd.DataFrame(
+        input_data,
+        columns=FEATURES
+    )
 
     prob = model.predict_proba(df_input)[0][1]
+
     pred = 1 if prob > 0.4 else 0
-    user = dict(zip(FEATURES, input_data[0]))
+
+    user = dict(zip(FEATURES,input_data[0]))
 
     diseases = []
 
@@ -411,13 +532,16 @@ if predict_clicked:
 
     st.rerun()
 
-
-# ── REFRESH LOGIC ─────────────────────
+# ───────────────── REFRESH ─────────────────
 if refresh_clicked:
+
     st.session_state.pred_result = None
     st.rerun()
 
-st.markdown("---")
-st.caption(
-    "⚠️ For educational/research use only. | Random Forest · 20 Vitals · 958 patients"
-)
+# ───────────────── FOOTER ─────────────────
+st.markdown(f"""
+<div class="footer">
+⚠️ Educational / Research Purpose Only <br>
+Random Forest Model • Accuracy: {acc:.2f}% • AUC: {auc:.2f}
+</div>
+""", unsafe_allow_html=True)
