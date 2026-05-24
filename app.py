@@ -359,44 +359,58 @@ with c2:
 
 # ── PREDICT LOGIC ─────────────────────
 if predict_clicked:
-   values = [
-    SOFA, Age, GCS, BUN, Creatinine, Urine, Lactate,
-    pH, HCO3, MAP, HR, PaO2, FiO2, MechVent,
-    WBC, HCT, Platelets, Albumin, Glucose, Weight
-]
 
-# Check if any field is empty
-if "" in values:
-    st.error("Please fill all input fields before prediction.")
-    st.stop()
+    values = [
+        SOFA, Age, GCS, BUN, Creatinine, Urine, Lactate,
+        pH, HCO3, MAP, HR, PaO2, FiO2, MechVent,
+        WBC, HCT, Platelets, Albumin, Glucose, Weight
+    ]
 
-# Convert input values to float
+    # Check if any field is empty
+    if "" in values:
+        st.error("Please fill all input fields before prediction.")
+        st.stop()
+
+    # Convert input values to float
     input_data = [[float(v) for v in values]]
+
     df_input = pd.DataFrame(input_data, columns=FEATURES)
-    prob     = model.predict_proba(df_input)[0][1]
-    pred     = 1 if prob > 0.4 else 0
-    user     = dict(zip(FEATURES, input_data[0]))
+
+    prob = model.predict_proba(df_input)[0][1]
+    pred = 1 if prob > 0.4 else 0
+    user = dict(zip(FEATURES, input_data[0]))
 
     diseases = []
+
     if user['Lactate'] > 2 and user['MAP'] < 65:
         diseases.append("Shock")
+
     if user['Creatinine'] > 1.5 and user['BUN'] > 25:
         diseases.append("Kidney Failure")
+
     if user['GCS'] < 8:
         diseases.append("Neurological Issue")
+
     if user['PaO2'] < 60 or user['FiO2'] > 0.6:
         diseases.append("Respiratory Failure")
+
     if user['WBC'] > 12:
         diseases.append("Infection / Sepsis")
+
     if user['SOFA'] >= 11:
         diseases.append("Multi-Organ Failure")
+
     if user['pH'] < 7.35:
         diseases.append("Metabolic Acidosis")
 
     st.session_state.pred_result = {
-        'prob': prob, 'pred': pred, 'diseases': diseases
+        'prob': prob,
+        'pred': pred,
+        'diseases': diseases
     }
+
     st.rerun()
+
 
 # ── REFRESH LOGIC ─────────────────────
 if refresh_clicked:
@@ -404,4 +418,6 @@ if refresh_clicked:
     st.rerun()
 
 st.markdown("---")
-st.caption("⚠️ For educational/research use only. | Random Forest · 20 Vitals · 958 patients")
+st.caption(
+    "⚠️ For educational/research use only. | Random Forest · 20 Vitals · 958 patients"
+)
