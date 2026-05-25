@@ -101,13 +101,11 @@ st.markdown("""
     border:2px solid #374151 !important;
 }
 
-/* dropdown text */
 .stSelectbox div[data-baseweb="select"] > div{
     background:#111827 !important;
     color:white !important;
 }
 
-/* make mechvent black */
 div[data-baseweb="select"]{
     background:#111827 !important;
     border-radius:10px !important;
@@ -435,19 +433,14 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# Conditions
-cond_text = "Conditions: --"
+# ───────────────── CONDITION BOX ─────────────────
+cond_text = "Classification: --"
 
 if st.session_state.pred_result:
 
-    diseases = st.session_state.pred_result['diseases']
+    disease = st.session_state.pred_result['disease']
 
-    if diseases:
-        cond_text = "Detected Conditions:\\n" + "\\n".join(
-            f"• {d}" for d in diseases
-        )
-    else:
-        cond_text = "Detected Conditions:\\n• No major abnormalities"
+    cond_text = f"Detected Classification:\n• {disease}"
 
 st.markdown(
     f'<div class="cond-box">{cond_text}</div>',
@@ -499,33 +492,34 @@ if predict_clicked:
 
     user = dict(zip(FEATURES,input_data[0]))
 
-    diseases = []
-
-    if user['Lactate'] > 2 and user['MAP'] < 65:
-        diseases.append("Shock")
-
-    if user['Creatinine'] > 1.5 and user['BUN'] > 25:
-        diseases.append("Kidney Failure")
-
-    if user['GCS'] < 8:
-        diseases.append("Neurological Issue")
-
-    if user['PaO2'] < 60 or user['FiO2'] > 0.6:
-        diseases.append("Respiratory Failure")
-
-    if user['WBC'] > 12:
-        diseases.append("Infection / Sepsis")
+    # ───────────────── SINGLE DISEASE CLASSIFICATION ─────────────────
+    disease = "No Major Abnormality"
 
     if user['SOFA'] >= 11:
-        diseases.append("Multi-Organ Failure")
+        disease = "Multi-Organ Failure"
 
-    if user['pH'] < 7.35:
-        diseases.append("Metabolic Acidosis")
+    elif user['Lactate'] > 2 and user['MAP'] < 65:
+        disease = "Shock"
+
+    elif user['Creatinine'] > 1.5 and user['BUN'] > 25:
+        disease = "Kidney Failure"
+
+    elif user['PaO2'] < 60 or user['FiO2'] > 0.6:
+        disease = "Respiratory Failure"
+
+    elif user['GCS'] < 8:
+        disease = "Neurological Issue"
+
+    elif user['WBC'] > 12:
+        disease = "Infection / Sepsis"
+
+    elif user['pH'] < 7.35:
+        disease = "Metabolic Acidosis"
 
     st.session_state.pred_result = {
         'prob': prob,
         'pred': pred,
-        'diseases': diseases
+        'disease': disease
     }
 
     st.rerun()
@@ -541,5 +535,6 @@ st.markdown(f"""
 <div class="footer">
 
 Random Forest Model • Accuracy: {acc:.2f}% • AUC: {auc:.2f}
+
 </div>
 """, unsafe_allow_html=True)
